@@ -64,6 +64,22 @@ public class AccountService {
         return account;
     }
 
+    @Transactional
+    public AccountResponse freezeAccount(String accountNumber) {
+        Account account = accountRepository.findByAccountNumber(accountNumber)
+                .orElseThrow(() -> new ResourceNotFoundException("Account not found: " + accountNumber));
+        account.setStatus(AccountStatus.FROZEN);
+        return toResponse(accountRepository.save(account));
+    }
+
+    @Transactional
+    public AccountResponse activateAccount(String accountNumber) {
+        Account account = accountRepository.findByAccountNumber(accountNumber)
+                .orElseThrow(() -> new ResourceNotFoundException("Account not found: " + accountNumber));
+        account.setStatus(AccountStatus.ACTIVE);
+        return toResponse(accountRepository.save(account));
+    }
+
     private String generateAccountNumber() {
         String accountNumber;
         do {
