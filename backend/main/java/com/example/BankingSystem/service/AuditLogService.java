@@ -33,4 +33,14 @@ public class AuditLogService {
     public void log(String action, String performedBy, String description) {
         log(action, null, null, performedBy, null, description);
     }
+
+    public org.springframework.data.domain.Page<AuditLog> getLogs(int page, int size) {
+        return auditLogRepository.findAll(
+                org.springframework.data.domain.PageRequest.of(
+                        page, 
+                        size, 
+                        org.springframework.data.domain.Sort.by("createdAt").descending()
+                )
+        );
+    }
 }

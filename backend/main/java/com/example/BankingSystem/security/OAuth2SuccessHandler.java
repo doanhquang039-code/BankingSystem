@@ -11,6 +11,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
+import org.springframework.beans.factory.annotation.Value;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -29,6 +30,9 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
+
+    @Value("${app.frontend-url:http://localhost:5173}")
+    private String frontendUrl;
 
     public OAuth2SuccessHandler(UserRepository userRepository, JwtUtil jwtUtil) {
         this.userRepository = userRepository;
@@ -94,12 +98,12 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
         String token = jwtUtil.generateToken(userDetails);
 
-        // Redirect về endpoint trả về thông tin token
+        // Redirect về frontend endpoint để tự động lưu token
         String encodedToken = URLEncoder.encode(token, StandardCharsets.UTF_8);
         String encodedUsername = URLEncoder.encode(user.getUsername(), StandardCharsets.UTF_8);
         String encodedEmail = URLEncoder.encode(user.getEmail(), StandardCharsets.UTF_8);
 
-        response.sendRedirect("/api/auth/oauth2/success?token=" + encodedToken
+        response.sendRedirect(frontendUrl + "/oauth2/redirect?token=" + encodedToken
                 + "&username=" + encodedUsername
                 + "&email=" + encodedEmail
                 + "&role=" + user.getRole().name());

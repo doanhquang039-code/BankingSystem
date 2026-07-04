@@ -57,7 +57,8 @@ public class CustomerService {
                 customer.getFullName(),
                 customer.getEmail(),
                 customer.getPhone(),
-                customer.getCreatedAt()
+                customer.getCreatedAt(),
+                customer.getLoyaltyPoints()
         );
     }
 }

@@ -32,7 +32,7 @@ public class FlywayConfig {
 
     @Bean(initMethod = "migrate")
     public Flyway flyway(DataSource dataSource) {
-        return Flyway.configure()
+        Flyway flyway = Flyway.configure()
                 .dataSource(dataSource)
                 .locations(locations)
                 .baselineOnMigrate(baselineOnMigrate)
@@ -40,5 +40,10 @@ public class FlywayConfig {
                 .outOfOrder(outOfOrder)
                 .validateOnMigrate(validateOnMigrate)
                 .load();
+        
+        // Tự động sửa chữa bảng lịch sử flyway_schema_history nếu có migration bị lỗi trước đó
+        flyway.repair();
+        
+        return flyway;
     }
 }

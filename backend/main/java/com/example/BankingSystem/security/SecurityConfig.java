@@ -44,6 +44,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Public: đăng nhập, đăng ký, OAuth2
                         .requestMatchers("/api/auth/**", "/oauth2/**", "/login/**").permitAll()
+                        // Audit logs
+                        .requestMatchers("/api/audit-logs/**").hasAnyRole("ADMIN", "AUDITOR")
                         // Admin only
                         .requestMatchers(HttpMethod.DELETE, "/api/**").hasRole("ADMIN")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")

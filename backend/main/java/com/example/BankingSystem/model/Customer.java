@@ -33,6 +33,9 @@ public class Customer {
     @OneToMany(mappedBy = "customer")
     private List<Account> accounts = new ArrayList<>();
 
+    @Column(name = "loyalty_points", nullable = false)
+    private Integer loyaltyPoints = 0;
+
     public Long getId() {
         return id;
     }
@@ -79,6 +82,14 @@ public class Customer {
 
     public void setAccounts(List<Account> accounts) {
         this.accounts = accounts;
+    }
+
+    public Integer getLoyaltyPoints() {
+        return loyaltyPoints;
+    }
+
+    public void setLoyaltyPoints(Integer loyaltyPoints) {
+        this.loyaltyPoints = loyaltyPoints;
     }
 }
 

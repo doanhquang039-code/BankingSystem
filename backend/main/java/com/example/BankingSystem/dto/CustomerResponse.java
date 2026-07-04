@@ -7,7 +7,8 @@ public record CustomerResponse(
         String fullName,
         String email,
         String phone,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        Integer loyaltyPoints
 ) {
 }
 

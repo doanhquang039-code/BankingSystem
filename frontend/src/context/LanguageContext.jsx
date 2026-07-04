@@ -1,0 +1,197 @@
+import { createContext, useState, useContext, useEffect } from 'react';
+
+const LanguageContext = createContext(null);
+
+const translations = {
+  vi: {
+    dashboard: 'Bảng Điều Khiển',
+    transfer: 'Chuyển Khoản',
+    beneficiaries: 'Danh Bạ Thụ Hưởng',
+    statement: 'Sao Kê & Giao Dịch',
+    admin: 'Phong Tỏa Tài Khoản',
+    auditLogs: 'Nhật Ký Audit',
+    supportCenter: 'Tra Cứu Khách Hàng',
+    logout: 'Đăng xuất',
+    settings: 'Cài đặt',
+    notifications: 'Thông báo',
+    welcome: 'Chào mừng trở lại',
+    totalAsset: 'TỐNG TÀI SẢN KÝ GỬI',
+    active: 'Hoạt động',
+    frozen: 'Bị phong tỏa',
+    deposit: 'Nạp Tiền',
+    withdraw: 'Rút Tiền',
+    sendMoney: 'Gửi tiền',
+    accountNumber: 'Số tài khoản',
+    balance: 'Số dư',
+    customerName: 'Tên khách hàng',
+    status: 'Trạng thái',
+    recentTransactions: 'Giao dịch gần đây',
+    themeColor: 'Màu sắc giao diện',
+    themeBrightness: 'Độ sáng màn hình',
+    language: 'Ngôn ngữ',
+    selectLanguage: 'Chọn ngôn ngữ hệ thống',
+    saveSettings: 'Lưu cấu hình',
+    login: 'Đăng Nhập',
+    register: 'Đăng Ký',
+    home: 'Trang chủ',
+    managerDashboard: 'Bảng Điều Kiểm Trưởng Phòng',
+    learning: 'Tích điểm & Học tập'
+  },
+  en: {
+    dashboard: 'Dashboard',
+    transfer: 'Fund Transfer',
+    beneficiaries: 'Beneficiaries',
+    statement: 'Statement & History',
+    admin: 'Freeze Accounts',
+    auditLogs: 'Audit Logs',
+    supportCenter: 'Support Lookup',
+    logout: 'Logout',
+    settings: 'Settings',
+    notifications: 'Notifications',
+    welcome: 'Welcome back',
+    totalAsset: 'TOTAL DEPOSITED ASSETS',
+    active: 'Active',
+    frozen: 'Frozen',
+    deposit: 'Deposit',
+    withdraw: 'Withdraw',
+    sendMoney: 'Send Money',
+    accountNumber: 'Account Number',
+    balance: 'Balance',
+    customerName: 'Customer Name',
+    status: 'Status',
+    recentTransactions: 'Recent Transactions',
+    themeColor: 'Interface Theme Color',
+    themeBrightness: 'Screen Brightness',
+    language: 'Language',
+    selectLanguage: 'Select System Language',
+    saveSettings: 'Save Settings',
+    login: 'Login',
+    register: 'Register',
+    home: 'Home',
+    managerDashboard: 'Manager Dashboard',
+    learning: 'Learning & Rewards'
+  },
+  ja: {
+    dashboard: 'ダッシュボード',
+    transfer: '送金決済',
+    beneficiaries: '受取人名簿',
+    statement: '取引明細書',
+    admin: '口座凍結管理',
+    auditLogs: '監査ログ履歴',
+    supportCenter: '顧客照会サポート',
+    logout: 'ログアウト',
+    settings: 'システム設定',
+    notifications: 'お知らせ通知',
+    welcome: 'お帰りなさい',
+    totalAsset: '預金総資産額',
+    active: '稼働中',
+    frozen: '凍結中',
+    deposit: '預金入金',
+    withdraw: '預金出金',
+    sendMoney: '送金する',
+    accountNumber: '口座番号',
+    balance: '預金残高',
+    customerName: '名義人氏名',
+    status: '口座状態',
+    recentTransactions: '最近の取引履歴',
+    themeColor: 'システムテーマ色',
+    themeBrightness: '画面の明るさ',
+    language: '使用言語',
+    selectLanguage: 'システム言語を選択',
+    saveSettings: '設定を保存',
+    login: 'ログイン',
+    register: '新規登録',
+    home: 'ホーム',
+    managerDashboard: 'マネージャーダッシュボード',
+    learning: '学習と特典'
+  },
+  ko: {
+    dashboard: '대시보드',
+    transfer: '계좌이체',
+    beneficiaries: '자주쓰는계좌',
+    statement: '거래내역조회',
+    admin: '계좌동결관리',
+    auditLogs: '감사로그조회',
+    supportCenter: '고객지원조회',
+    logout: '로그아웃',
+    settings: '환경설정',
+    notifications: '알림내역',
+    welcome: '다시 오신 것을 환영합니다',
+    totalAsset: '총 예치 자산',
+    active: '정상',
+    frozen: '동결됨',
+    deposit: '입금하기',
+    withdraw: '출금하기',
+    sendMoney: '이체하기',
+    accountNumber: '계좌번호',
+    balance: '잔액',
+    customerName: '예금주명',
+    status: '계좌상태',
+    recentTransactions: '최근 거래내역',
+    themeColor: '인터페이스 테마 색상',
+    themeBrightness: '화면 밝기 설정',
+    language: '시스템 언어',
+    selectLanguage: '시스템 언어 선택',
+    saveSettings: '설정 저장',
+    login: '로그인',
+    register: '회원가입',
+    home: '홈페이지',
+    managerDashboard: '관리자 대시보드',
+    learning: '학습 및 혜택'
+  },
+  zh: {
+    dashboard: '控制面板',
+    transfer: '转账汇款',
+    beneficiaries: '收款人名册',
+    statement: '账单与历史',
+    admin: '冻结账户管理',
+    auditLogs: '审计日志',
+    supportCenter: '客服信息查询',
+    logout: '安全退出',
+    settings: '系统设置',
+    notifications: '消息通知',
+    welcome: '欢迎回来',
+    totalAsset: '托管总资产',
+    active: '正常活跃',
+    frozen: '已被冻结',
+    deposit: '在线存款',
+    withdraw: '在线取款',
+    sendMoney: '立即转账',
+    accountNumber: '银行账号',
+    balance: '账户余额',
+    customerName: '客户姓名',
+    status: '账户状态',
+    recentTransactions: '最近交易历史',
+    themeColor: '界面主题色彩',
+    themeBrightness: '屏幕显示亮度',
+    language: '系统语言',
+    selectLanguage: '选择系统语言',
+    saveSettings: '保存配置',
+    login: '安全登录',
+    register: '账户注册',
+    home: '官方首页',
+    managerDashboard: '经理监控面板',
+    learning: '学习与奖励'
+  }
+};
+
+export const LanguageProvider = ({ children }) => {
+  const [lang, setLang] = useState(localStorage.getItem('lang') || 'vi');
+
+  const changeLanguage = (newLang) => {
+    setLang(newLang);
+    localStorage.setItem('lang', newLang);
+  };
+
+  const t = (key) => {
+    return translations[lang]?.[key] || translations['en']?.[key] || key;
+  };
+
+  return (
+    <LanguageContext.Provider value={{ lang, changeLanguage, t }}>
+      {children}
+    </LanguageContext.Provider>
+  );
+};
+
+export const useLanguage = () => useContext(LanguageContext);
