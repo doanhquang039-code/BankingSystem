@@ -17,8 +17,29 @@ const Admin = () => {
   
   const [actionLoading, setActionLoading] = useState(null); // ID of account being processed
 
+  const [cpu, setCpu] = useState(34);
+  const [ram, setRam] = useState(4.2);
+  const [sessions, setSessions] = useState(128);
+
+  const fetchDashboardStats = async () => {
+    try {
+      const res = await api.get('/dashboard/admin');
+      setCpu(res.data.cpu);
+      setRam(parseFloat(res.data.ram.toFixed(1)));
+      setSessions(res.data.sessions);
+    } catch (err) {
+      console.error('Failed to fetch admin dashboard stats', err);
+    }
+  };
+
   useEffect(() => {
     fetchAllAccounts();
+    fetchDashboardStats();
+    
+    // Get live monitoring updates from backend
+    const interval = setInterval(fetchDashboardStats, 3000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   const fetchAllAccounts = async () => {
@@ -59,9 +80,45 @@ const Admin = () => {
 
   return (
     <div className="admin-view">
-      <div className="section-header">
+      <div className="section-header" style={{ marginBottom: '20px' }}>
         <h1>Quản Trị Hệ Thống</h1>
         <p>Hệ thống giám sát bảo mật tài khoản người dùng, phong tỏa tài khoản đáng ngờ hoặc mở lại hoạt động.</p>
+      </div>
+
+      {/* System Resources Monitor Dashboard */}
+      <div className="system-monitor-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '20px' }}>
+        <div className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>CPU LOAD</span>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+            <h2 style={{ fontSize: '32px', margin: 0, fontWeight: 'bold', color: cpu > 60 ? '#ef4444' : '#10b981' }}>{cpu}%</h2>
+            <span style={{ fontSize: '11px', color: '#10b981' }}>Ổn định</span>
+          </div>
+          <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', overflow: 'hidden' }}>
+            <div style={{ width: `${cpu}%`, height: '100%', background: cpu > 60 ? '#ef4444' : '#10b981', transition: 'width 0.5s ease' }}></div>
+          </div>
+        </div>
+
+        <div className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>DUNG LƯỢNG RAM</span>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+            <h2 style={{ fontSize: '32px', margin: 0, fontWeight: 'bold', color: '#6366f1' }}>{ram} GB</h2>
+            <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>của 8.0 GB</span>
+          </div>
+          <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', overflow: 'hidden' }}>
+            <div style={{ width: `${(ram / 8) * 100}%`, height: '100%', background: '#6366f1', transition: 'width 0.5s ease' }}></div>
+          </div>
+        </div>
+
+        <div className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>ACTIVE SESSIONS</span>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+            <h2 style={{ fontSize: '32px', margin: 0, fontWeight: 'bold', color: '#f59e0b' }}>{sessions}</h2>
+            <span style={{ fontSize: '11px', color: '#10b981' }}>Live</span>
+          </div>
+          <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', overflow: 'hidden' }}>
+            <div style={{ width: '65%', height: '100%', background: '#f59e0b' }}></div>
+          </div>
+        </div>
       </div>
 
       <div className="admin-filters glass-card">

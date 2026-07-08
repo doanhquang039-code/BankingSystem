@@ -12,10 +12,12 @@ const OAuth2RedirectHandler = () => {
     const username = searchParams.get('username');
     const email = searchParams.get('email');
     const role = searchParams.get('role');
+    const customerId = searchParams.get('customerId');
+    const customerName = searchParams.get('customerName');
 
     if (token && username) {
       // Lưu token và user info vào AuthContext
-      loginWithOAuthToken(token, username, email, role);
+      loginWithOAuthToken(token, username, email, role, customerId, customerName);
       // Điều hướng về trang chủ Dashboard
       navigate('/dashboard');
     } else {

@@ -51,6 +51,28 @@ public class CustomerService {
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + id));
     }
 
+    @Transactional
+    public CustomerResponse updateCustomer(Long id, CreateCustomerRequest request) {
+        Customer customer = findCustomer(id);
+
+        if (!customer.getEmail().equalsIgnoreCase(request.email())) {
+            if (customerRepository.existsByEmail(request.email())) {
+                throw new BadRequestException("customer.email.exists");
+            }
+            customer.setEmail(request.email());
+        }
+
+        if (!customer.getPhone().equals(request.phone())) {
+            if (customerRepository.existsByPhone(request.phone())) {
+                throw new BadRequestException("customer.phone.exists");
+            }
+            customer.setPhone(request.phone());
+        }
+
+        customer.setFullName(request.fullName());
+        return toResponse(customerRepository.save(customer));
+    }
+
     private CustomerResponse toResponse(Customer customer) {
         return new CustomerResponse(
                 customer.getId(),

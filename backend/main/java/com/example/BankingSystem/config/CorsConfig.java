@@ -13,6 +13,8 @@ public class CorsConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.addAllowedOrigin("http://127.0.0.1:5173");
         config.addAllowedOrigin("http://localhost:5173");
+        config.addAllowedOrigin("http://localhost"); // Capacitor Android Origin
+        config.addAllowedOrigin("capacitor://localhost"); // Capacitor iOS Origin
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
         config.setAllowCredentials(true);

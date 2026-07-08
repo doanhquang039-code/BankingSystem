@@ -4,10 +4,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
-public class ViewController {
+public class LearningViewController {
 
-    @GetMapping("/login")
-    public String login() {
-        return "login"; // Trả về file templates/login.html
+    @GetMapping("/learning")
+    public String learning() {
+        return "forward:/index.html";
     }
 }

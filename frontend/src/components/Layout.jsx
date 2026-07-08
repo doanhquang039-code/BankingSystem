@@ -21,8 +21,12 @@ import {
   ArrowUpRight,
   Info,
   Settings as SettingsIcon,
-  BookOpen
+  BookOpen,
+  Landmark,
+  CreditCard,
+  TrendingDown
 } from 'lucide-react';
+import AiChatbot from './AiChatbot';
 
 const Layout = () => {
   const { user, logout, isAdmin, isManager, isSupport, isAuditor, isCustomer } = useAuth();
@@ -142,6 +146,9 @@ const Layout = () => {
     // 2. Client Business Links (Customers, Admins)
     if (isCustomer() || isAdmin()) {
       items.push({ label: t('transfer'), path: '/dashboard/transfer', icon: <Send size={20} /> });
+      items.push({ label: 'Gửi Tiết Kiệm', path: '/dashboard/savings', icon: <Landmark size={20} /> });
+      items.push({ label: 'Khoản Vay', path: '/dashboard/loans', icon: <TrendingDown size={20} /> });
+      items.push({ label: 'Thẻ Của Tôi', path: '/dashboard/cards', icon: <CreditCard size={20} /> });
       items.push({ label: t('beneficiaries'), path: '/dashboard/beneficiaries', icon: <Users size={20} /> });
       items.push({ label: t('learning'), path: '/dashboard/learning', icon: <BookOpen size={20} /> });
     }
@@ -156,13 +163,18 @@ const Layout = () => {
       items.push({ label: t('supportCenter'), path: '/dashboard/support-center', icon: <Users size={20} /> });
     }
 
-    // 5. Special log links for Manager / Admin
+    // 5. Special log links / Loans duyệt for Manager / Admin
+    if (isManager()) {
+      items.push({ label: 'Duyệt Khoản Vay', path: '/dashboard/loans', icon: <TrendingDown size={20} /> });
+    }
+    
     if (isManager() || isAdmin()) {
       items.push({ label: t('auditLogs'), path: '/dashboard/audit-logs', icon: <FileText size={20} /> });
     }
 
     // 6. Admin Control panel
     if (isAdmin()) {
+      items.push({ label: 'Duyệt Khoản Vay', path: '/dashboard/loans', icon: <TrendingDown size={20} /> });
       items.push({ label: t('admin'), path: '/dashboard/admin', icon: <ShieldAlert size={20} /> });
     }
 
@@ -295,6 +307,7 @@ const Layout = () => {
           <Outlet />
         </main>
       </div>
+      <AiChatbot />
     </div>
   );
 };

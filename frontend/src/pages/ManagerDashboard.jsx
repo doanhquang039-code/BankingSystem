@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 
 const ManagerDashboard = () => {
-  const [accounts, setAccounts] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,28 +21,20 @@ const ManagerDashboard = () => {
   const fetchBankData = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/accounts'); // Manager can read all accounts
-      setAccounts(res.data || []);
+      const res = await api.get('/dashboard/manager');
+      setStats(res.data);
       setLoading(false);
     } catch (err) {
-      console.error('Failed to load accounts for Manager', err);
+      console.error('Failed to load dashboard data for Manager', err);
       setLoading(false);
     }
   };
 
-  const totalAccounts = accounts.length;
-  const totalBalance = accounts.reduce((sum, a) => sum + (a.balance || 0), 0);
-  const activeAccountsCount = accounts.filter(a => a.status === 'ACTIVE').length;
-  const frozenAccountsCount = accounts.filter(a => a.status === 'FROZEN').length;
-  
-  // Lấy ra top 5 tài khoản giàu nhất
-  const topAccounts = [...accounts]
-    .sort((a, b) => b.balance - a.balance)
-    .slice(0, 5);
-
-  if (loading) {
+  if (loading || !stats) {
     return <div className="loading-spinner">Đang tải dữ liệu tổng quan ngân hàng...</div>;
   }
+
+  const { totalAccounts, totalBalance, activeAccountsCount, frozenAccountsCount, topAccounts, monthlyGrowth } = stats;
 
   return (
     <div className="manager-dashboard-view">
@@ -89,6 +81,50 @@ const ManagerDashboard = () => {
           </div>
           <h2>{frozenAccountsCount}</h2>
           <p>Tài khoản đang bị tạm ngừng hoạt động</p>
+        </div>
+      </div>
+
+      {/* Revenue & Growth Trend Chart */}
+      <div className="glass-card" style={{ padding: '20px', marginBottom: '30px', marginTop: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+          <h3 style={{ margin: 0, fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}>
+            <TrendingUp size={20} className="text-primary" />
+            Biểu Đồ Xu Hướng Tăng Trưởng Doanh Thu Quý II
+          </h3>
+          <span style={{ fontSize: '12px', color: '#10b981', background: 'rgba(16,185,129,0.1)', padding: '4px 8px', borderRadius: '12px' }}>
+            +24.5% So với quý trước
+          </span>
+        </div>
+        <div style={{ position: 'relative', height: '140px', width: '100%', marginTop: '20px' }}>
+          {/* SVG Wave chart */}
+          <svg viewBox="0 0 500 100" preserveAspectRatio="none" style={{ width: '100%', height: '100%' }}>
+            <defs>
+              <linearGradient id="managerGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#6366f1" stopOpacity="0.4"/>
+                <stop offset="100%" stopColor="#6366f1" stopOpacity="0.0"/>
+              </linearGradient>
+            </defs>
+            {/* Grid Lines */}
+            <line x1="0" y1="20" x2="500" y2="20" stroke="rgba(255,255,255,0.05)" strokeDasharray="3,3" />
+            <line x1="0" y1="50" x2="500" y2="50" stroke="rgba(255,255,255,0.05)" strokeDasharray="3,3" />
+            <line x1="0" y1="80" x2="500" y2="80" stroke="rgba(255,255,255,0.05)" strokeDasharray="3,3" />
+            
+            {/* Area */}
+            <path d="M 0 80 Q 80 40 160 60 T 320 20 T 500 10 L 500 100 L 0 100 Z" fill="url(#managerGrad)" />
+            {/* Line */}
+            <path d="M 0 80 Q 80 40 160 60 T 320 20 T 500 10" fill="none" stroke="#6366f1" strokeWidth="3" />
+            
+            {/* Dots */}
+            <circle cx="160" cy="60" r="4" fill="#a855f7" />
+            <circle cx="320" cy="20" r="4" fill="#6366f1" />
+            <circle cx="500" cy="10" r="4" fill="#10b981" />
+          </svg>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-secondary)', marginTop: '8px' }}>
+            <span>Tháng 4</span>
+            <span>Tháng 5</span>
+            <span>Tháng 6</span>
+            <span>Tháng 7 (Dự kiến)</span>
+          </div>
         </div>
       </div>
 

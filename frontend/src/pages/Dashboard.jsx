@@ -12,7 +12,9 @@ import {
   HelpCircle,
   Eye,
   EyeOff,
-  DollarSign
+  DollarSign,
+  QrCode,
+  Camera
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -24,6 +26,8 @@ const Dashboard = () => {
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [showOpenModal, setShowOpenModal] = useState(false);
   const [showOperationModal, setShowOperationModal] = useState(null); // 'deposit' or 'withdraw'
+  const [showQrModal, setShowQrModal] = useState(false);
+  const [qrScanSuccess, setQrScanSuccess] = useState(false);
   
   const [initialBalance, setInitialBalance] = useState('');
   const [opAmount, setOpAmount] = useState('');
@@ -91,7 +95,7 @@ const Dashboard = () => {
       // Let's verify DTO in AccountService.java:
       // Customer customer = customerService.findCustomer(request.customerId());
       // So request.customerId must exist!
-      const customerId = user?.customerId || 1; 
+      const customerId = user?.customerId; 
 
       await api.post('/accounts', {
         customerId: customerId,
@@ -253,6 +257,62 @@ const Dashboard = () => {
               <h4>Rút Tiền</h4>
               <p>Rút tiền trực tuyến từ tài khoản hiện tại</p>
             </button>
+
+            <button 
+              className="action-card deposit"
+              onClick={() => {
+                setQrScanSuccess(false);
+                setShowQrModal(true);
+              }}
+              disabled={!selectedAccount || selectedAccount.status !== 'ACTIVE'}
+              style={{ gridColumn: 'span 2', marginTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', height: '54px' }}
+            >
+              <div className="action-icon" style={{ background: 'rgba(168,85,247,0.1)', color: '#a855f7', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px', borderRadius: '8px' }}><QrCode size={20} /></div>
+              <h4 style={{ margin: 0, fontSize: '14px' }}>Thanh Toán / Chuyển Khoản QR</h4>
+            </button>
+          </div>
+
+          {/* Spending Analysis Chart & Loyalty Info */}
+          <div className="spending-analysis glass-card" style={{ marginTop: '20px', padding: '20px' }}>
+            <div className="section-header" style={{ marginBottom: '15px' }}>
+              <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0, fontSize: '15px', color: 'var(--text-primary)' }}>
+                <TrendingUp size={18} className="text-primary" />
+                Phân Tích Chi Tiêu Tuần
+              </h4>
+            </div>
+            <div className="chart-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', height: '100px', padding: '10px 0' }}>
+              <div style={{ textAlign: 'center', width: '12%' }}>
+                <div style={{ height: '35px', background: 'linear-gradient(to top, #6366f1, #a855f7)', borderRadius: '4px' }}></div>
+                <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>T2</span>
+              </div>
+              <div style={{ textAlign: 'center', width: '12%' }}>
+                <div style={{ height: '70px', background: 'linear-gradient(to top, #6366f1, #a855f7)', borderRadius: '4px' }}></div>
+                <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>T3</span>
+              </div>
+              <div style={{ textAlign: 'center', width: '12%' }}>
+                <div style={{ height: '20px', background: 'linear-gradient(to top, #6366f1, #a855f7)', borderRadius: '4px' }}></div>
+                <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>T4</span>
+              </div>
+              <div style={{ textAlign: 'center', width: '12%' }}>
+                <div style={{ height: '90px', background: 'linear-gradient(to top, #6366f1, #a855f7)', borderRadius: '4px' }}></div>
+                <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>T5</span>
+              </div>
+              <div style={{ textAlign: 'center', width: '12%' }}>
+                <div style={{ height: '45px', background: 'linear-gradient(to top, #6366f1, #a855f7)', borderRadius: '4px' }}></div>
+                <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>T6</span>
+              </div>
+              <div style={{ textAlign: 'center', width: '12%' }}>
+                <div style={{ height: '60px', background: 'linear-gradient(to top, #6366f1, #a855f7)', borderRadius: '4px' }}></div>
+                <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>T7</span>
+              </div>
+              <div style={{ textAlign: 'center', width: '12%' }}>
+                <div style={{ height: '80px', background: 'linear-gradient(to top, #10b981, #34d399)', borderRadius: '4px' }}></div>
+                <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>CN</span>
+              </div>
+            </div>
+            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '10px', textAlign: 'center' }}>
+              Tổng chi tiêu tuần này giảm 12% so với tuần trước.
+            </p>
           </div>
         </div>
       </div>
@@ -403,6 +463,141 @@ const Dashboard = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* QR Code Modal */}
+      {showQrModal && (
+        <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div className="modal-content glass-card" style={{ padding: '24px', width: '90%', maxWidth: '440px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '12px' }}>
+              <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: 'white' }}>
+                <QrCode size={20} className="text-primary" />
+                Giao Dịch Bằng Mã QR
+              </h3>
+              <button onClick={() => setShowQrModal(false)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '20px' }}>×</button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              
+              {/* Tab Selector */}
+              <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', padding: '4px', borderRadius: '8px' }}>
+                <button 
+                  type="button"
+                  style={{ flex: 1, padding: '8px', border: 'none', borderRadius: '6px', background: !qrScanSuccess ? '#6366f1' : 'none', color: 'white', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}
+                  onClick={() => setQrScanSuccess(false)}
+                >
+                  Mã QR Nhận Tiền
+                </button>
+                <button 
+                  type="button"
+                  style={{ flex: 1, padding: '8px', border: 'none', borderRadius: '6px', background: qrScanSuccess ? '#6366f1' : 'none', color: 'white', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}
+                  onClick={() => setQrScanSuccess(true)}
+                >
+                  Quét Mã Chuyển Khoản
+                </button>
+              </div>
+
+              {!qrScanSuccess ? (
+                /* QR Code Generation tab */
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px', padding: '10px 0' }}>
+                  <div style={{ 
+                    width: '180px', height: '180px', background: 'white', borderRadius: '12px', padding: '15px',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative'
+                  }}>
+                    {/* Simulated QR blocks using pure CSS/styling inside a grid */}
+                    <div style={{ width: '100%', height: '100%', display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '6px', opacity: 0.85 }}>
+                      <div style={{ background: '#000', borderRadius: '2px' }}></div>
+                      <div style={{ background: '#000', borderRadius: '2px' }}></div>
+                      <div></div>
+                      <div style={{ background: '#000', borderRadius: '2px' }}></div>
+                      <div style={{ background: '#000', borderRadius: '2px' }}></div>
+                      
+                      <div style={{ background: '#000', borderRadius: '2px' }}></div>
+                      <div></div>
+                      <div style={{ background: '#000', borderRadius: '2px' }}></div>
+                      <div></div>
+                      <div style={{ background: '#000', borderRadius: '2px' }}></div>
+                      
+                      <div></div>
+                      <div style={{ background: '#000', borderRadius: '2px' }}></div>
+                      <div style={{ background: '#6366f1', borderRadius: '2px' }}></div>
+                      <div style={{ background: '#000', borderRadius: '2px' }}></div>
+                      <div></div>
+                      
+                      <div style={{ background: '#000', borderRadius: '2px' }}></div>
+                      <div></div>
+                      <div style={{ background: '#000', borderRadius: '2px' }}></div>
+                      <div></div>
+                      <div style={{ background: '#000', borderRadius: '2px' }}></div>
+                      
+                      <div style={{ background: '#000', borderRadius: '2px' }}></div>
+                      <div style={{ background: '#000', borderRadius: '2px' }}></div>
+                      <div></div>
+                      <div style={{ background: '#000', borderRadius: '2px' }}></div>
+                      <div style={{ background: '#000', borderRadius: '2px' }}></div>
+                    </div>
+                    {/* Bank Icon in the middle of QR code */}
+                    <div style={{ position: 'absolute', width: '36px', height: '36px', background: '#6366f1', borderRadius: '50%', border: '3px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>🏦</div>
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <strong style={{ fontSize: '14px', color: 'white', display: 'block' }}>{selectedAccount?.customerName}</strong>
+                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>VietBank • {selectedAccount?.accountNumber}</span>
+                  </div>
+                </div>
+              ) : (
+                /* QR Scan Simulator tab */
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px', padding: '10px 0' }}>
+                  <style>{`
+                    @keyframes scanLineAnim {
+                      0% { top: 0%; }
+                      50% { top: 100%; }
+                      100% { top: 0%; }
+                    }
+                  `}</style>
+                  <div style={{ 
+                    width: '180px', height: '180px', border: '2px dashed #6366f1', borderRadius: '12px', position: 'relative',
+                    overflow: 'hidden', background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}>
+                    <Camera size={40} style={{ color: 'rgba(255,255,255,0.15)' }} />
+                    {/* Scanning Laser line */}
+                    <div style={{ 
+                      position: 'absolute', left: 0, width: '100%', height: '2px', background: '#10b981',
+                      boxShadow: '0 0 8px #10b981', top: '10%',
+                      animation: 'scanLineAnim 2s infinite linear'
+                    }}></div>
+                  </div>
+                  
+                  <button 
+                    onClick={async () => {
+                      setActionLoading(true);
+                      try {
+                        // Simulate sending a transfer of 50K from selected account to Nguyen Van An
+                        await api.post('/transactions/transfer', {
+                          sourceAccountNumber: selectedAccount.accountNumber,
+                          destinationAccountNumber: '100000000001',
+                          amount: 50000,
+                          description: 'Quet ma QR Thanh toan VietBank'
+                        });
+                        alert('Quét mã thành công! Đã chuyển khoản nhanh 50,000 VND đến Nguyen Van An.');
+                        setShowQrModal(false);
+                        fetchAccounts(); // reload balances
+                      } catch (err) {
+                        alert(err.response?.data?.message || 'Quét mã chuyển khoản thất bại.');
+                      } finally {
+                        setActionLoading(false);
+                      }
+                    }}
+                    className="btn-primary" 
+                    style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '8px' }}
+                    disabled={actionLoading}
+                  >
+                    <QrCode size={16} />
+                    {actionLoading ? 'Đang chuyển khoản...' : 'Quét Mã & Chuyển 50K Chào Mừng'}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

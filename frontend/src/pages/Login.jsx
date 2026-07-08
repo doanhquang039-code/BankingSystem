@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 import { Lock, User, AlertCircle, RefreshCw } from 'lucide-react';
 
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [captchaId, setCaptchaId] = useState('');
+  const [captchaImage, setCaptchaImage] = useState('');
+  const [captchaCode, setCaptchaCode] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   
@@ -19,33 +23,57 @@ const Login = () => {
     const oauthUsername = searchParams.get('username');
     const oauthEmail = searchParams.get('email');
     const oauthRole = searchParams.get('role');
+    const customerId = searchParams.get('customerId');
+    const customerName = searchParams.get('customerName');
 
     if (oauthToken && oauthUsername) {
-      loginWithOAuthToken(oauthToken, oauthUsername, oauthEmail, oauthRole);
+      loginWithOAuthToken(oauthToken, oauthUsername, oauthEmail, oauthRole, customerId, customerName);
       navigate('/dashboard');
     } else if (token) {
       navigate('/dashboard');
     }
   }, [searchParams, token, navigate, loginWithOAuthToken]);
 
+  // Load CAPTCHA khi component mount
+  useEffect(() => {
+    fetchCaptcha();
+  }, []);
+
+  const fetchCaptcha = async () => {
+    try {
+      const res = await api.get('/auth/captcha');
+      setCaptchaId(res.data.captchaId);
+      setCaptchaImage(res.data.captchaImage);
+      setCaptchaCode('');
+    } catch (err) {
+      console.error('Failed to load CAPTCHA image', err);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSubmitting(true);
 
-    const result = await login(username, password);
+    const result = await login(username, password, captchaId, captchaCode);
     setSubmitting(false);
 
     if (result.success) {
       navigate('/dashboard');
     } else {
       setError(result.message);
+      fetchCaptcha(); // Tải lại mã mới nếu đăng nhập thất bại
     }
   };
 
   const handleSocialLogin = (provider) => {
+    // Lưu origin hiện tại của frontend vào cookie để backend chuyển hướng về đúng cổng
+    document.cookie = `frontend_origin=${window.location.origin}; path=/; max-age=300; SameSite=Lax`;
+
     // Chuyển hướng trình duyệt sang endpoint OAuth2 của Backend
-    window.location.href = `http://localhost:8080/oauth2/authorization/${provider}`;
+    const isCapacitor = window.Capacitor || (window.location.hostname === 'localhost' && window.location.port === '');
+    const backendHost = isCapacitor ? '10.0.2.2:8080' : 'localhost:8080';
+    window.location.href = `http://${backendHost}/oauth2/authorization/${provider}`;
   };
 
   return (
@@ -98,6 +126,57 @@ const Login = () => {
             </div>
           </div>
 
+          {/* CAPTCHA Section */}
+          {captchaImage && (
+            <div className="input-group">
+              <label htmlFor="captchaCode">Mã xác thực</label>
+              <div className="captcha-wrapper" style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '4px' }}>
+                <div 
+                  className="captcha-img-box" 
+                  style={{ 
+                    height: '42px', 
+                    borderRadius: '8px', 
+                    overflow: 'hidden', 
+                    background: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    flexShrink: 0
+                  }}
+                >
+                  <img src={`data:image/png;base64,${captchaImage}`} alt="CAPTCHA" style={{ height: '100%', width: 'auto', display: 'block' }} />
+                </div>
+                <button 
+                  type="button" 
+                  className="btn-secondary" 
+                  onClick={fetchCaptcha}
+                  style={{ height: '42px', width: '42px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px', flexShrink: 0 }}
+                  title="Đổi mã khác"
+                >
+                  <RefreshCw size={16} />
+                </button>
+                <input
+                  id="captchaCode"
+                  type="text"
+                  value={captchaCode}
+                  onChange={(e) => setCaptchaCode(e.target.value)}
+                  placeholder="Nhập mã"
+                  required
+                  style={{ 
+                    flex: 1, 
+                    height: '42px', 
+                    padding: '0 12px', 
+                    borderRadius: '8px', 
+                    border: '1px solid rgba(255,255,255,0.1)', 
+                    background: 'rgba(15,23,42,0.6)', 
+                    color: 'white',
+                    textTransform: 'uppercase'
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
           <button type="submit" className="btn-primary auth-submit" disabled={submitting}>
             {submitting ? <RefreshCw className="animate-spin" size={18} /> : 'Đăng Nhập'}
           </button>
@@ -126,7 +205,6 @@ const Login = () => {
           </button>
 
           <button onClick={() => handleSocialLogin('microsoft')} className="social-btn microsoft">
-            {/* Custom Simple Windows Icon representation */}
             <svg viewBox="0 0 23 23" width="16" height="16" fill="currentColor">
               <path d="M0 0h11v11H0zm12 0h11v11H12zM0 12h11v11H0zm12 0h11v11H12z"/>
             </svg>

@@ -8,6 +8,8 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,6 +58,7 @@ public class GamificationService {
             boolean redeemed
     ) {}
 
+    @Cacheable(value = "lessons", key = "#customerId")
     @Transactional(readOnly = true)
     public List<LessonDto> getLessonsForCustomer(Long customerId) {
         List<LanguageLesson> lessons = lessonRepository.findAll();
@@ -81,6 +84,7 @@ public class GamificationService {
         return dtos;
     }
 
+    @CacheEvict(value = "lessons", key = "#customerId")
     @Transactional
     public SubmitResponse submitAnswer(Long customerId, Long lessonId, String answer) {
         LanguageLesson lesson = lessonRepository.findById(lessonId)
@@ -111,6 +115,7 @@ public class GamificationService {
         return new SubmitResponse(true, "Chính xác! Chúc mừng bạn đã hoàn thành bài học và được cộng " + points + " điểm thưởng!", points);
     }
 
+    @Cacheable(value = "vouchers", key = "'shop'")
     @Transactional(readOnly = true)
     public List<VoucherDto> getVouchersShop() {
         return voucherRepository.findByCustomerNull().stream()
@@ -118,6 +123,7 @@ public class GamificationService {
                 .toList();
     }
 
+    @Cacheable(value = "vouchers", key = "'customer:' + #customerId")
     @Transactional(readOnly = true)
     public List<VoucherDto> getCustomerVouchers(Long customerId) {
         return voucherRepository.findByCustomerId(customerId).stream()
@@ -125,6 +131,7 @@ public class GamificationService {
                 .toList();
     }
 
+    @CacheEvict(value = "vouchers", allEntries = true)
     @Transactional
     public VoucherDto redeemVoucher(Long customerId, Long voucherId) {
         Voucher voucher = voucherRepository.findById(voucherId)

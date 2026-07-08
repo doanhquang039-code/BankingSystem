@@ -9,5 +9,11 @@ public record LoginRequest(
 
         @NotBlank(message = "Password không được để trống")
         @Size(min = 6, message = "Password tối thiểu 6 ký tự")
-        String password
+        String password,
+
+        @NotBlank(message = "Mã CAPTCHA ID không được để trống")
+        String captchaId,
+
+        @NotBlank(message = "Mã xác thực CAPTCHA không được để trống")
+        String captchaCode
 ) {}

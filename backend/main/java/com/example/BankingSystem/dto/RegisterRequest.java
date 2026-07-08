@@ -15,5 +15,13 @@ public record RegisterRequest(
 
         @NotBlank(message = "Email không được để trống")
         @Email(message = "Email không hợp lệ")
-        String email
+        String email,
+
+        @NotBlank(message = "Họ và tên không được để trống")
+        @Size(max = 120, message = "Họ và tên tối đa 120 ký tự")
+        String fullName,
+
+        @NotBlank(message = "Số điện thoại không được để trống")
+        @Size(max = 30, message = "Số điện thoại tối đa 30 ký tự")
+        String phone
 ) {}

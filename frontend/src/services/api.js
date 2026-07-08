@@ -1,8 +1,14 @@
 import axios from 'axios';
 
-// Backend API runs on port 8080 by default
+// Backend API runs on port 8080 by default.
+// In Android Emulator, localhost maps to 10.0.2.2
+const getBaseUrl = () => {
+  const isCapacitor = window.Capacitor || (window.location.hostname === 'localhost' && window.location.port === '');
+  return isCapacitor ? 'http://10.0.2.2:8080/api' : 'http://localhost:8080/api';
+};
+
 const api = axios.create({
-  baseURL: 'http://localhost:8080/api',
+  baseURL: getBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },

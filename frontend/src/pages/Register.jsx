@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Lock, User, Mail, AlertCircle, RefreshCw, CheckCircle } from 'lucide-react';
+import { Lock, User, Mail, AlertCircle, RefreshCw, CheckCircle, Phone } from 'lucide-react';
 
 const Register = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
@@ -31,7 +33,7 @@ const Register = () => {
     }
 
     setSubmitting(true);
-    const result = await register(username, password, email);
+    const result = await register(username, password, email, fullName, phone);
     setSubmitting(false);
 
     if (result.success) {
@@ -82,6 +84,36 @@ const Register = () => {
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Nhập ít nhất 3 ký tự"
                 minLength={3}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="input-group">
+            <label htmlFor="fullName">Họ và tên</label>
+            <div className="input-wrapper">
+              <User className="input-icon" size={18} />
+              <input
+                id="fullName"
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Nhập họ và tên của bạn"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="input-group">
+            <label htmlFor="phone">Số điện thoại</label>
+            <div className="input-wrapper">
+              <Phone className="input-icon" size={18} />
+              <input
+                id="phone"
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="Nhập số điện thoại"
                 required
               />
             </div>

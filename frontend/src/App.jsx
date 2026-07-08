@@ -16,6 +16,9 @@ import SupportCenter from './pages/SupportCenter';
 import LandingPage from './pages/LandingPage';
 import Settings from './pages/Settings';
 import Learning from './pages/Learning';
+import Savings from './pages/Savings';
+import Loans from './pages/Loans';
+import Cards from './pages/Cards';
 import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider } from './context/ThemeContext';
 import './App.css';
@@ -101,6 +104,9 @@ function App() {
               >
                 <Route index element={<Dashboard />} />
                 <Route path="transfer" element={<Transfer />} />
+                <Route path="savings" element={<Savings />} />
+                <Route path="loans" element={<Loans />} />
+                <Route path="cards" element={<Cards />} />
                 <Route path="beneficiaries" element={<Beneficiaries />} />
                 <Route path="statement" element={<Statement />} />
                 <Route path="notifications" element={<Notifications />} />

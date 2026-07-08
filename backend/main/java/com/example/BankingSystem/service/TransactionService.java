@@ -173,10 +173,7 @@ public class TransactionService {
 
     private void notifyAccountOwner(Account account, String type, String title, String body, Long txId) {
         try {
-            User owner = userRepository.findAll().stream()
-                    .filter(u -> u.getCustomer() != null &&
-                            u.getCustomer().getId().equals(account.getCustomer().getId()))
-                    .findFirst().orElse(null);
+            User owner = userRepository.findByCustomerId(account.getCustomer().getId()).orElse(null);
             if (owner != null) {
                 notificationService.sendAsync(owner.getId(), type, title, body, "transactions", txId);
             }

@@ -157,6 +157,13 @@ const Learning = () => {
           <Ticket size={18} />
           Cửa Hàng Đổi Voucher
         </button>
+        <button 
+          className={`tab-btn ${activeTab === 'leaderboard' ? 'active' : ''}`}
+          onClick={() => setActiveTab('leaderboard')}
+        >
+          <TrendingUp size={18} />
+          Bảng Xếp Hạng Học Tập
+        </button>
       </div>
 
       {loading ? (
@@ -273,7 +280,7 @@ const Learning = () => {
             )}
           </div>
         </div>
-      ) : (
+      ) : activeTab === 'shop' ? (
         /* ================= TAB 2: VOUCHER SHOP ================= */
         <div className="shop-layout">
           <div className="shop-vouchers-section">
@@ -339,6 +346,76 @@ const Learning = () => {
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      ) : (
+        /* ================= TAB 3: LEADERBOARD ================= */
+        <div className="leaderboard-layout glass-card" style={{ padding: '30px', marginTop: '20px' }}>
+          <div className="section-header" style={{ marginBottom: '25px', textAlign: 'center' }}>
+            <h3>Bảng Xếp Hạng Khách Hàng Chăm Chỉ</h3>
+            <p>Học tập ngoại ngữ tích điểm mỗi ngày để lọt vào top dẫn đầu và nhận quà tri ân đặc quyền từ VietBank.</p>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '600px', margin: '0 auto' }}>
+            {/* Top 1 */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'linear-gradient(135deg, rgba(245,158,11,0.15) 0%, rgba(251,191,36,0.05) 100%)', padding: '16px 20px', borderRadius: '12px', border: '1px solid rgba(245,158,11,0.3)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                <span style={{ fontSize: '24px' }}>🏆</span>
+                <div>
+                  <strong style={{ display: 'block', color: '#f59e0b', fontSize: '15px' }}>Doanh Quang Huy</strong>
+                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Hạng 1</span>
+                </div>
+              </div>
+              <strong style={{ color: '#f59e0b', fontSize: '16px' }}>1,250 PTS</strong>
+            </div>
+
+            {/* Top 2 */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.04)', padding: '16px 20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                <span style={{ fontSize: '24px' }}>🥈</span>
+                <div>
+                  <strong style={{ display: 'block', color: 'white', fontSize: '15px' }}>Nguyen Van An</strong>
+                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Hạng 2</span>
+                </div>
+              </div>
+              <strong style={{ color: 'white', fontSize: '16px' }}>950 PTS</strong>
+            </div>
+
+            {/* Top 3 */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.04)', padding: '16px 20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                <span style={{ fontSize: '24px' }}>🥉</span>
+                <div>
+                  <strong style={{ display: 'block', color: 'white', fontSize: '15px' }}>Le Anh Tuan</strong>
+                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Hạng 3</span>
+                </div>
+              </div>
+              <strong style={{ color: 'white', fontSize: '16px' }}>700 PTS</strong>
+            </div>
+
+            {/* Top 4 (Current User) */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'linear-gradient(135deg, rgba(99,102,241,0.15) 0%, rgba(168,85,247,0.05) 100%)', padding: '16px 20px', borderRadius: '12px', border: '2px solid #6366f1' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                <span style={{ fontSize: '20px', width: '24px', textAlign: 'center', fontWeight: 'bold', color: '#6366f1' }}>4</span>
+                <div>
+                  <strong style={{ display: 'block', color: '#818cf8', fontSize: '15px' }}>Bạn ({points > 500 ? 'Học giả' : 'Thành viên mới'})</strong>
+                  <span style={{ fontSize: '11px', color: '#818cf8' }}>Hạng 4 • Đang tích lũy</span>
+                </div>
+              </div>
+              <strong style={{ color: '#818cf8', fontSize: '16px' }}>{points} PTS</strong>
+            </div>
+
+            {/* Top 5 */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.04)', padding: '16px 20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                <span style={{ fontSize: '18px', width: '24px', textAlign: 'center', fontWeight: 'bold', color: 'var(--text-secondary)' }}>5</span>
+                <div>
+                  <strong style={{ display: 'block', color: 'white', fontSize: '15px' }}>Hoang Minh Duc</strong>
+                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Hạng 5</span>
+                </div>
+              </div>
+              <strong style={{ color: 'white', fontSize: '16px' }}>320 PTS</strong>
+            </div>
           </div>
         </div>
       )}

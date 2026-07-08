@@ -3,24 +3,46 @@ package com.example.BankingSystem.api;
 import com.example.BankingSystem.dto.CreateCustomerRequest;
 import com.example.BankingSystem.dto.CustomerResponse;
 import com.example.BankingSystem.service.CustomerService;
+import com.example.BankingSystem.model.User;
+import com.example.BankingSystem.repository.UserRepository;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/customers")
 public class CustomerController {
     private final CustomerService customerService;
+    private final UserRepository userRepository;
 
-    public CustomerController(CustomerService customerService) {
+    public CustomerController(CustomerService customerService, UserRepository userRepository) {
         this.customerService = customerService;
+        this.userRepository = userRepository;
+    }
+
+    @GetMapping("/me")
+    public CustomerResponse getMyProfile(@AuthenticationPrincipal UserDetails userDetails) {
+        User user = userRepository.findByUsername(userDetails.getUsername())
+                .orElseThrow(() -> new org.springframework.security.access.AccessDeniedException("Access denied"));
+        if (user.getCustomer() == null) {
+            throw new com.example.BankingSystem.exception.ResourceNotFoundException("Customer profile not found");
+        }
+        return customerService.getCustomer(user.getCustomer().getId());
+    }
+
+    @PutMapping("/me")
+    public CustomerResponse updateMyProfile(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody CreateCustomerRequest request) {
+        User user = userRepository.findByUsername(userDetails.getUsername())
+                .orElseThrow(() -> new org.springframework.security.access.AccessDeniedException("Access denied"));
+        if (user.getCustomer() == null) {
+            throw new com.example.BankingSystem.exception.ResourceNotFoundException("Customer profile not found");
+        }
+        return customerService.updateCustomer(user.getCustomer().getId(), request);
     }
 
     @GetMapping

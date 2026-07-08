@@ -16,9 +16,9 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, [token]);
 
-  const login = async (username, password) => {
+  const login = async (username, password, captchaId, captchaCode) => {
     try {
-      const response = await api.post('/auth/login', { username, password });
+      const response = await api.post('/auth/login', { username, password, captchaId, captchaCode });
       const { token: jwtToken, ...userData } = response.data;
       
       localStorage.setItem('token', jwtToken);
@@ -34,9 +34,9 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (username, password, email) => {
+  const register = async (username, password, email, fullName, phone) => {
     try {
-      const response = await api.post('/auth/register', { username, password, email });
+      const response = await api.post('/auth/register', { username, password, email, fullName, phone });
       const { token: jwtToken, ...userData } = response.data;
       
       localStorage.setItem('token', jwtToken);
@@ -52,8 +52,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const loginWithOAuthToken = (jwtToken, username, email, role) => {
-    const userData = { username, email, role };
+  const loginWithOAuthToken = (jwtToken, username, email, role, customerId, customerName) => {
+    const userData = { 
+      username, 
+      email, 
+      role, 
+      customerId: customerId ? parseInt(customerId) : null, 
+      customerName 
+    };
     localStorage.setItem('token', jwtToken);
     localStorage.setItem('user', JSON.stringify(userData));
     setToken(jwtToken);

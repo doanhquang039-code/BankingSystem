@@ -20,6 +20,9 @@ const AuditLogs = () => {
   const [totalElements, setTotalElements] = useState(0);
   const [pageSize] = useState(15);
 
+  const [filterUser, setFilterUser] = useState('');
+  const [filterAction, setFilterAction] = useState('');
+
   useEffect(() => {
     fetchAuditLogs();
   }, [page]);
@@ -43,22 +46,88 @@ const AuditLogs = () => {
     }
   };
 
+  const handleExportCSV = () => {
+    if (logs.length === 0) return;
+    
+    // CSV Header (UTF-8 BOM to display Vietnamese correctly in Excel)
+    let csvContent = "\uFEFFThời Gian,Người Thực Hiện,Thao Tác,Đối Tượng,Chi Tiết Hoạt Động\n";
+    
+    // CSV Rows
+    logs.forEach(log => {
+      const timeStr = `${new Date(log.createdAt).toLocaleTimeString('vi-VN')} ${new Date(log.createdAt).toLocaleDateString('vi-VN')}`;
+      const user = log.performedBy;
+      const action = log.action;
+      const entity = log.entityType ? `${log.entityType} #${log.entityId}` : '—';
+      const desc = `"${log.description.replace(/"/g, '""')}"`;
+      
+      csvContent += `${timeStr},${user},${action},${entity},${desc}\n`;
+    });
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `banking_audit_logs_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const filteredLogs = logs.filter(log => {
+    const matchUser = log.performedBy.toLowerCase().includes(filterUser.toLowerCase());
+    const matchAction = log.action.toLowerCase().includes(filterAction.toLowerCase());
+    return matchUser && matchAction;
+  });
+
   return (
     <div className="audit-logs-view">
-      <div className="section-header-main">
+      <div className="section-header-main" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
         <div className="header-left">
           <h1>Nhật Ký Hệ Thống (Audit Logs)</h1>
           <p>Nhật ký ghi lại toàn bộ hoạt động nhạy cảm trên hệ thống nhằm phục vụ mục đích kiểm toán và bảo mật.</p>
+        </div>
+        <button 
+          onClick={handleExportCSV} 
+          className="btn-primary" 
+          style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px' }}
+          disabled={logs.length === 0}
+        >
+          <FileSpreadsheet size={16} />
+          Xuất Báo Cáo CSV
+        </button>
+      </div>
+
+      {/* Filter Bar */}
+      <div className="admin-filters glass-card" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginTop: '20px', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <label style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Lọc Người Thực Hiện</label>
+          <input 
+            type="text" 
+            value={filterUser} 
+            onChange={(e) => setFilterUser(e.target.value)} 
+            placeholder="Ví dụ: admin, auditor..." 
+            style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(15,23,42,0.4)', color: 'white' }}
+          />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <label style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Lọc Loại Hoạt Động</label>
+          <input 
+            type="text" 
+            value={filterAction} 
+            onChange={(e) => setFilterAction(e.target.value)} 
+            placeholder="Ví dụ: LOGIN, WITHDRAW..." 
+            style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(15,23,42,0.4)', color: 'white' }}
+          />
         </div>
       </div>
 
       {loading ? (
         <div className="loading-spinner">Đang tải nhật ký kiểm toán...</div>
-      ) : logs.length === 0 ? (
+      ) : filteredLogs.length === 0 ? (
         <div className="empty-state-large">
           <FileSpreadsheet size={64} />
-          <h2>Nhật ký trống</h2>
-          <p>Chưa ghi nhận hoạt động nào trên hệ thống.</p>
+          <h2>Không có nhật ký phù hợp</h2>
+          <p>Không tìm thấy hoạt động nào khớp với các bộ lọc hiện tại.</p>
         </div>
       ) : (
         <>
@@ -74,7 +143,7 @@ const AuditLogs = () => {
                 </tr>
               </thead>
               <tbody>
-                {logs.map((log) => (
+                {filteredLogs.map((log) => (
                   <tr key={log.id} className="tx-row">
                     <td className="tx-date">
                       {new Date(log.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}{' '}

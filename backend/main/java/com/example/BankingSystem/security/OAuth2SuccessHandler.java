@@ -2,7 +2,11 @@ package com.example.BankingSystem.security;
 
 import com.example.BankingSystem.enums.UserRole;
 import com.example.BankingSystem.model.User;
+import com.example.BankingSystem.model.Customer;
 import com.example.BankingSystem.repository.UserRepository;
+import com.example.BankingSystem.repository.CustomerRepository;
+import com.example.BankingSystem.service.AccountService;
+import com.example.BankingSystem.dto.CreateAccountRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.Authentication;
@@ -13,8 +17,10 @@ import org.springframework.stereotype.Component;
 
 import org.springframework.beans.factory.annotation.Value;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -28,14 +34,23 @@ import java.util.List;
 @Component
 public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
+    private static final SecureRandom RANDOM = new SecureRandom();
+
     private final UserRepository userRepository;
+    private final CustomerRepository customerRepository;
+    private final AccountService accountService;
     private final JwtUtil jwtUtil;
 
     @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
 
-    public OAuth2SuccessHandler(UserRepository userRepository, JwtUtil jwtUtil) {
+    public OAuth2SuccessHandler(UserRepository userRepository,
+                                CustomerRepository customerRepository,
+                                AccountService accountService,
+                                JwtUtil jwtUtil) {
         this.userRepository = userRepository;
+        this.customerRepository = customerRepository;
+        this.accountService = accountService;
         this.jwtUtil = jwtUtil;
     }
 
@@ -68,7 +83,21 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         // Tìm hoặc tạo mới user theo email
         final String finalEmail = email;
         final String finalExternalId = externalId;
+        final String finalName = name;
         User user = userRepository.findByEmail(finalEmail).orElseGet(() -> {
+            // Lần đầu đăng nhập qua mạng xã hội -> Tạo Customer và Account mặc định
+            Customer customer = new Customer();
+            customer.setFullName(finalName != null ? finalName : finalEmail.split("@")[0]);
+            customer.setEmail(finalEmail);
+
+            // Sinh số điện thoại ngẫu nhiên chưa tồn tại
+            String phone;
+            do {
+                phone = "+84" + String.format("%09d", Math.abs(RANDOM.nextLong()) % 1_000_000_000L);
+            } while (customerRepository.existsByPhone(phone));
+            customer.setPhone(phone);
+            customer = customerRepository.save(customer);
+
             User newUser = new User();
             // Username từ email (phần trước @), đảm bảo unique
             String baseUsername = finalEmail.split("@")[0].replaceAll("[^a-zA-Z0-9_]", "_");
@@ -80,8 +109,14 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             newUser.setPassword("OAUTH2_NO_PASSWORD_" + finalExternalId);
             newUser.setRole(UserRole.CUSTOMER);
             newUser.setEnabled(true);
+            newUser.setCustomer(customer);
             newUser.setCreatedAt(LocalDateTime.now());
-            return userRepository.save(newUser);
+            User savedUser = userRepository.save(newUser);
+
+            // Mở tài khoản thanh toán ban đầu với 50.000 VND
+            accountService.createAccount(new CreateAccountRequest(customer.getId(), BigDecimal.valueOf(50000)));
+
+            return savedUser;
         });
 
         // Cập nhật last_login
@@ -98,15 +133,32 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
         String token = jwtUtil.generateToken(userDetails);
 
+        // Đọc origin của frontend từ cookie, nếu không có thì fallback về cấu hình mặc định (app.frontend-url)
+        String targetUrl = frontendUrl;
+        if (request.getCookies() != null) {
+            for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
+                if ("frontend_origin".equals(cookie.getName())) {
+                    targetUrl = cookie.getValue();
+                    break;
+                }
+            }
+        }
+
         // Redirect về frontend endpoint để tự động lưu token
         String encodedToken = URLEncoder.encode(token, StandardCharsets.UTF_8);
         String encodedUsername = URLEncoder.encode(user.getUsername(), StandardCharsets.UTF_8);
         String encodedEmail = URLEncoder.encode(user.getEmail(), StandardCharsets.UTF_8);
 
-        response.sendRedirect(frontendUrl + "/oauth2/redirect?token=" + encodedToken
+        Long customerId = user.getCustomer() != null ? user.getCustomer().getId() : null;
+        String customerName = user.getCustomer() != null ? user.getCustomer().getFullName() : "";
+        String encodedCustomerName = URLEncoder.encode(customerName, StandardCharsets.UTF_8);
+
+        response.sendRedirect(targetUrl + "/oauth2/redirect?token=" + encodedToken
                 + "&username=" + encodedUsername
                 + "&email=" + encodedEmail
-                + "&role=" + user.getRole().name());
+                + "&role=" + user.getRole().name()
+                + "&customerId=" + (customerId != null ? customerId : "")
+                + "&customerName=" + encodedCustomerName);
     }
 
     private String ensureUniqueUsername(String base) {

@@ -14,14 +14,38 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final com.example.BankingSystem.service.CaptchaService captchaService;
+    private final org.springframework.cache.CacheManager cacheManager;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService,
+                          com.example.BankingSystem.service.CaptchaService captchaService,
+                          org.springframework.cache.CacheManager cacheManager) {
         this.authService = authService;
+        this.captchaService = captchaService;
+        this.cacheManager = cacheManager;
+    }
+
+    /**
+     * GET /api/auth/captcha
+     * Trả về mã xác thực ảnh Base64 và ID xác thực
+     */
+    @GetMapping("/captcha")
+    public com.example.BankingSystem.dto.CaptchaResponse getCaptcha() {
+        String captchaId = java.util.UUID.randomUUID().toString();
+        String text = captchaService.generateText();
+        String imageBase64 = captchaService.generateImageBase64(text);
+
+        org.springframework.cache.Cache cache = cacheManager.getCache("captcha");
+        if (cache != null) {
+            cache.put(captchaId, text);
+        }
+
+        return new com.example.BankingSystem.dto.CaptchaResponse(captchaId, imageBase64);
     }
 
     /**
      * POST /api/auth/login
-     * Body: { "username": "admin", "password": "admin123" }
+     * Body: { "username": "admin", "password": "admin123", "captchaId": "...", "captchaCode": "..." }
      */
     @PostMapping("/login")
     public LoginResponse login(@Valid @RequestBody LoginRequest request) {
