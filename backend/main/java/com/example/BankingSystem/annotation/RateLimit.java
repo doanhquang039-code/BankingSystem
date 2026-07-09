@@ -1,0 +1,20 @@
+package com.example.BankingSystem.annotation;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+@Target({ElementType.METHOD, ElementType.TYPE})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface RateLimit {
+    /**
+     * Số lượng request tối đa được phép.
+     */
+    int limit() default 10;
+
+    /**
+     * Cửa sổ thời gian tính bằng giây.
+     */
+    int duration() default 60;
+}

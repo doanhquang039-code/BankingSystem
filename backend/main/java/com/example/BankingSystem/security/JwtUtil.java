@@ -55,7 +55,12 @@ public class JwtUtil {
     }
 
     private boolean isTokenExpired(String token) {
-        return parseClaims(token).getExpiration().before(new Date());
+        return extractExpiration(token).before(new Date());
+    }
+
+    /** Lấy thời gian hết hạn (Expiration Date) của token */
+    public Date extractExpiration(String token) {
+        return parseClaims(token).getExpiration();
     }
 
     private Claims parseClaims(String token) {

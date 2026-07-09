@@ -9,6 +9,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
+import com.example.BankingSystem.annotation.RateLimit;
+import com.example.BankingSystem.security.JwtUtil;
+import com.example.BankingSystem.service.TokenBlacklistService;
+import org.springframework.http.ResponseEntity;
+import java.util.Date;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -16,13 +23,19 @@ public class AuthController {
     private final AuthService authService;
     private final com.example.BankingSystem.service.CaptchaService captchaService;
     private final org.springframework.cache.CacheManager cacheManager;
+    private final TokenBlacklistService tokenBlacklistService;
+    private final JwtUtil jwtUtil;
 
     public AuthController(AuthService authService,
                           com.example.BankingSystem.service.CaptchaService captchaService,
-                          org.springframework.cache.CacheManager cacheManager) {
+                          org.springframework.cache.CacheManager cacheManager,
+                          TokenBlacklistService tokenBlacklistService,
+                          JwtUtil jwtUtil) {
         this.authService = authService;
         this.captchaService = captchaService;
         this.cacheManager = cacheManager;
+        this.tokenBlacklistService = tokenBlacklistService;
+        this.jwtUtil = jwtUtil;
     }
 
     /**
@@ -30,6 +43,7 @@ public class AuthController {
      * Trả về mã xác thực ảnh Base64 và ID xác thực
      */
     @GetMapping("/captcha")
+    @RateLimit(limit = 15, duration = 60)
     public com.example.BankingSystem.dto.CaptchaResponse getCaptcha() {
         String captchaId = java.util.UUID.randomUUID().toString();
         String text = captchaService.generateText();
@@ -48,8 +62,29 @@ public class AuthController {
      * Body: { "username": "admin", "password": "admin123", "captchaId": "...", "captchaCode": "..." }
      */
     @PostMapping("/login")
+    @RateLimit(limit = 5, duration = 60)
     public LoginResponse login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request);
+    }
+
+    /**
+     * POST /api/auth/logout
+     */
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            try {
+                Date expiration = jwtUtil.extractExpiration(token);
+                long remainingTtl = expiration.getTime() - System.currentTimeMillis();
+                if (remainingTtl > 0) {
+                    tokenBlacklistService.blacklistToken(token, remainingTtl);
+                }
+            } catch (Exception e) {
+                // Ignore parse errors or already expired tokens
+            }
+        }
+        return ResponseEntity.ok(Map.of("message", "Đăng xuất thành công"));
     }
 
     /**
@@ -58,6 +93,7 @@ public class AuthController {
      */
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
+    @RateLimit(limit = 3, duration = 60)
     public LoginResponse register(@Valid @RequestBody RegisterRequest request) {
         return authService.register(request);
     }

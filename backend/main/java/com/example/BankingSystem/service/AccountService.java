@@ -64,6 +64,15 @@ public class AccountService {
         return account;
     }
 
+    public Account findActiveAccountWithLock(String accountNumber) {
+        Account account = accountRepository.findByAccountNumberWithLock(accountNumber)
+                .orElseThrow(() -> new ResourceNotFoundException("Account not found: " + accountNumber));
+        if (account.getStatus() != AccountStatus.ACTIVE) {
+            throw new BadRequestException("account.inactive", accountNumber);
+        }
+        return account;
+    }
+
     @Transactional
     public AccountResponse freezeAccount(String accountNumber) {
         Account account = accountRepository.findByAccountNumber(accountNumber)

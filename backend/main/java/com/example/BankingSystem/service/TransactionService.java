@@ -7,6 +7,7 @@ import com.example.BankingSystem.exception.BadRequestException;
 import com.example.BankingSystem.model.Account;
 import com.example.BankingSystem.model.BankTransaction;
 import com.example.BankingSystem.model.User;
+import com.example.BankingSystem.annotation.Audit;
 import com.example.BankingSystem.enums.TransactionType;
 import com.example.BankingSystem.repository.AccountRepository;
 import com.example.BankingSystem.repository.TransactionRepository;
@@ -65,8 +66,9 @@ public class TransactionService {
     }
 
     @Transactional
+    @Audit(action = "DEPOSIT")
     public TransactionResponse deposit(String accountNumber, MoneyOperationRequest request) {
-        Account account = accountService.findActiveAccount(accountNumber);
+        Account account = accountService.findActiveAccountWithLock(accountNumber);
         account.setBalance(account.getBalance().add(request.amount()));
         accountRepository.save(account);
 
@@ -84,16 +86,13 @@ public class TransactionService {
                         accountNumber, request.amount(), account.getBalance()),
                 saved.getId());
 
-        auditLogService.log("DEPOSIT", "accounts", account.getId(),
-                "system", null,
-                String.format("Deposit %,.0f VND vào %s", request.amount(), accountNumber));
-
         return toResponse(saved);
     }
 
     @Transactional
+    @Audit(action = "WITHDRAW")
     public TransactionResponse withdraw(String accountNumber, MoneyOperationRequest request) {
-        Account account = accountService.findActiveAccount(accountNumber);
+        Account account = accountService.findActiveAccountWithLock(accountNumber);
         ensureEnoughBalance(account, request.amount());
         account.setBalance(account.getBalance().subtract(request.amount()));
         accountRepository.save(account);
@@ -111,21 +110,27 @@ public class TransactionService {
                         accountNumber, request.amount(), account.getBalance()),
                 saved.getId());
 
-        auditLogService.log("WITHDRAW", "accounts", account.getId(),
-                "system", null,
-                String.format("Withdraw %,.0f VND từ %s", request.amount(), accountNumber));
-
         return toResponse(saved);
     }
 
     @Transactional
+    @Audit(action = "TRANSFER")
     public TransactionResponse transfer(TransferRequest request) {
         if (request.fromAccountNumber().equals(request.toAccountNumber())) {
             throw new BadRequestException("transaction.same_account");
         }
 
-        Account source = accountService.findActiveAccount(request.fromAccountNumber());
-        Account destination = accountService.findActiveAccount(request.toAccountNumber());
+        Account source;
+        Account destination;
+        // Lock accounts in alphabetical order of account numbers to prevent deadlocks
+        if (request.fromAccountNumber().compareTo(request.toAccountNumber()) < 0) {
+            source = accountService.findActiveAccountWithLock(request.fromAccountNumber());
+            destination = accountService.findActiveAccountWithLock(request.toAccountNumber());
+        } else {
+            destination = accountService.findActiveAccountWithLock(request.toAccountNumber());
+            source = accountService.findActiveAccountWithLock(request.fromAccountNumber());
+        }
+
         ensureEnoughBalance(source, request.amount());
 
         source.setBalance(source.getBalance().subtract(request.amount()));
@@ -154,11 +159,6 @@ public class TransactionService {
                 String.format("Tài khoản %s nhận +%,.0f VND từ %s.",
                         request.toAccountNumber(), request.amount(), request.fromAccountNumber()),
                 saved.getId());
-
-        auditLogService.log("TRANSFER", "accounts", source.getId(),
-                "system", null,
-                String.format("Transfer %,.0f VND từ %s đến %s",
-                        request.amount(), request.fromAccountNumber(), request.toAccountNumber()));
 
         return toResponse(saved);
     }
