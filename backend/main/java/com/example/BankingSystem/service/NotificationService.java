@@ -8,6 +8,7 @@ import com.example.BankingSystem.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -15,16 +16,29 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
+/**
+ * Handles notification persistence and real-time WebSocket delivery.
+ *
+ * <p>After each banking transaction, {@link #sendAsync} is called to:
+ * <ol>
+ *   <li>Persist the notification to the {@code notifications} table.</li>
+ *   <li>Push a real-time STOMP message to the user's private topic
+ *       {@code /topic/notifications/{userId}}.</li>
+ * </ol>
+ */
 @Service
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     public NotificationService(NotificationRepository notificationRepository,
-                                UserRepository userRepository) {
+                                UserRepository userRepository,
+                                SimpMessagingTemplate messagingTemplate) {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
+        this.messagingTemplate = messagingTemplate;
     }
 
     /** Lấy danh sách thông báo của user (có phân trang) */
@@ -63,7 +77,15 @@ public class NotificationService {
         return notificationRepository.markAllAsRead(user.getId());
     }
 
-    /** Tạo thông báo async (gọi từ TransactionService sau giao dịch) */
+    /**
+     * Tạo notification async – gọi từ TransactionService / KycService sau giao dịch.
+     *
+     * <p>Flow:
+     * <ol>
+     *   <li>Persist Notification to DB.</li>
+     *   <li>Push real-time STOMP message to {@code /topic/notifications/{userId}}.</li>
+     * </ol>
+     */
     @Async
     public void sendAsync(Long userId, String type, String title, String body,
                           String refType, Long refId) {
@@ -71,6 +93,7 @@ public class NotificationService {
             User user = userRepository.findById(userId).orElse(null);
             if (user == null) return;
 
+            // 1. Persist to DB
             Notification notification = new Notification();
             notification.setUser(user);
             notification.setType(type);
@@ -78,7 +101,13 @@ public class NotificationService {
             notification.setBody(body);
             notification.setRefType(refType);
             notification.setRefId(refId);
-            notificationRepository.save(notification);
+            Notification saved = notificationRepository.save(notification);
+
+            // 2. Push real-time via WebSocket STOMP
+            NotificationResponse payload = toResponse(saved);
+            messagingTemplate.convertAndSend(
+                    "/topic/notifications/" + userId, payload);
+
         } catch (Exception e) {
             // Silent — không block business transaction
         }

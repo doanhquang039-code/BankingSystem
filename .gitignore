@@ -36,4 +36,7 @@ build/
 *local.properties
 application-local.properties
 **/main/resources/application-local.properties
+.env
+*.env
+!.env.example
 

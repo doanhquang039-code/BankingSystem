@@ -58,6 +58,11 @@ public class AuditAspect {
                             "Giao dịch %s số tiền %,.0f VND",
                             action, response.amount());
                 }
+            } else if (result instanceof com.example.BankingSystem.dto.KycResponse kycResponse) {
+                entityId = kycResponse.id();
+                entityType = "kyc_requests";
+                description = String.format("KYC [%s] cho customer [%s] (id: %d). Trạng thái: %s",
+                        action, kycResponse.customerName(), kycResponse.customerId(), kycResponse.status());
             } else {
                 // Hỗ trợ các kiểu trả về khác nếu có
                 description = "Thực hiện hành động: " + action;

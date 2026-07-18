@@ -42,8 +42,15 @@ public class SecurityConfig {
                 // OAuth2 cần session tạm thời trong quá trình handshake
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> auth
-                        // Public: đăng nhập, đăng ký, OAuth2
-                        .requestMatchers("/api/auth/**", "/oauth2/**", "/login/**").permitAll()
+                        // Public: đăng nhập, đăng ký, OAuth2, static frontend resources
+                        .requestMatchers("/api/auth/**", "/oauth2/**", "/login/**", "/", "/index.html", "/favicon.svg", "/icons.svg", "/assets/**").permitAll()
+                        // WebSocket endpoint (handshake phải public, JWT auth xảy ra ở STOMP layer)
+                        .requestMatchers("/ws/**").permitAll()
+                        // Swagger UI
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        // Actuator health (for Docker health checks)
+                        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                        .requestMatchers("/actuator/**").hasRole("ADMIN")
                         // Audit logs
                         .requestMatchers("/api/audit-logs/**").hasAnyRole("ADMIN", "AUDITOR")
                         // Admin only
